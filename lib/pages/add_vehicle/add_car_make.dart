@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:transportation_mobile_app/models/CarQueryVehicle.dart';
 import 'package:transportation_mobile_app/pages/add_vehicle/add_model.dart';
+import 'package:transportation_mobile_app/pages/add_vehicle/add_vehicle_details.dart';
 import 'package:transportation_mobile_app/repositories/VehicleRepository.dart';
 import 'package:transportation_mobile_app/resources/constants/colors.dart';
 import 'package:transportation_mobile_app/services/VehicleService.dart';
@@ -18,13 +19,23 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
   late Future<List<CarQueryVehicle>> _vehiclesList;
   final vehicleRepository = VehicleRepository(vehicleService: VehicleService());
-
+  int selectedIndex = -1;
+  var isButtonNextEnabled = false;
 
   @override
   void initState() {
     _vehiclesList = vehicleRepository.getCarQueryVehicles();
   }
-  int selectedIndex = 0;
+
+  void fetchListOfCarMakes(){
+    setState(() {
+      _vehiclesList = vehicleRepository.getCarQueryVehicles();
+    });
+  }
+
+  String test(){
+    return "test";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +71,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                             onTap: (){
                               setState(() {
                                 selectedIndex = index;
+                                isButtonNextEnabled = true;
                               });
                             },
                           ),
@@ -73,20 +85,31 @@ class _VehiclesPageState extends State<VehiclesPage> {
                             IconButton(
                               onPressed: (){
 
-                                final vehicle = VehicleBuilder()
-                                .setManufacturer(snapshot.data![selectedIndex].makeDisplay)
-                                .build();
+                                if(!isButtonNextEnabled){
+                                  return;
+                                }
+
+                                final vehicle = Vehicle(
+                                    licencePlateNumber: null,
+                                    vin: null,
+                                    manufacturer: snapshot.data![selectedIndex].makeDisplay,
+                                    model: null,
+                                    year: null,
+                                    color: null,
+                                    typeId: null
+                                );
 
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(builder: (context) => AddModel(vehicle: vehicle))
                                 );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                   Icons.navigate_next,
                                   size: 50,
-                                  color: AppColors.secondary,
+                                  color: isButtonNextEnabled ? AppColors.secondary : Colors.grey,
                               ),
+
                             ),
                           ]
                         ),
@@ -94,7 +117,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
                     ],
                   );
                 }else{
-                  return const ErrorMessage(message: "There was error loading vehicles");
+                  return ErrorMessage(
+                      message: "There was error loading vehicles",
+                      function: fetchListOfCarMakes,
+                  );
                 }
               }else{
                 return const Center(
